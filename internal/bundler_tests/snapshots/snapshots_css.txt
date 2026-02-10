@@ -2248,6 +2248,94 @@ div {
 /* entry.css */
 
 ================================================================================
+TestDeterministicLocalCSSNamingMultipleEntriesWithImportUnix
+---------- /out/entry1.css ----------
+/* shared.css */
+.shared_6c94d204_entry1 {
+  color: green;
+}
+
+/* entry1.css */
+.entry1_6c94d204_entry1 {
+  color: red;
+}
+
+---------- /out/entry2.css ----------
+/* shared.css */
+.shared_0d628650_entry2 {
+  color: green;
+}
+
+/* entry2.css */
+.entry2_0d628650_entry2 {
+  color: blue;
+}
+
+================================================================================
+TestDeterministicLocalCSSNamingSingleEntryWithImportMinifyIdentifiersUnix
+---------- /out/entry.css ----------
+/* other/imported.css */
+.imported_de41d3ab {
+  color: blue;
+}
+
+/* entry.css */
+.entry_de41d3ab {
+  color: red;
+}
+
+================================================================================
+TestDeterministicLocalCSSNamingSingleEntryWithImportMinifyIdentifiersWin
+---------- /out/entry.css ----------
+/* other/imported.css */
+.imported_e8fb34a7 {
+  color: blue;
+}
+
+/* entry.css */
+.entry_e8fb34a7 {
+  color: red;
+}
+
+================================================================================
+TestDeterministicLocalCSSNamingSingleEntryWithImportUnix
+---------- /out/entry1.css ----------
+/* entry1.css */
+.entry1_6c94d204_entry1 {
+  color: red;
+}
+
+---------- /out/entry.css ----------
+/* other/imported.css */
+.imported_de41d3ab_entry {
+  color: blue;
+}
+
+/* entry.css */
+.entry_de41d3ab_entry {
+  color: red;
+}
+
+---------- /out/entry2.css ----------
+/* entry2.css */
+.entry2_0d628650_entry2 {
+  color: red;
+}
+
+================================================================================
+TestDeterministicLocalCSSNamingSingleEntryWithImportWin
+---------- /out/entry.css ----------
+/* other/imported.css */
+.imported_e8fb34a7_entry {
+  color: blue;
+}
+
+/* entry.css */
+.entry_e8fb34a7_entry {
+  color: red;
+}
+
+================================================================================
 TestExternalImportURLInCSS
 ---------- /out/entry.css ----------
 /* src/entry.css */
