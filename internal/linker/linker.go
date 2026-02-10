@@ -477,10 +477,29 @@ func (c *linkerContext) mangleLocalCSS(usedLocalNames map[string]bool) {
 	}
 
 	if c.options.DeterministicLocalCSSNaming {
+		// When there's a single CSS module entry point, use its path for all
+		// local CSS names. This ensures that @import'd CSS modules use the same
+		// ident as the importing module.
+		var entryAbsPath, entryRelPath string
+		cssModuleEntryCount := 0
+		for _, ep := range c.graph.EntryPoints() {
+			file := c.graph.Files[ep.SourceIndex].InputFile
+			if _, ok := file.Repr.(*graph.CSSRepr); ok && file.Loader == config.LoaderLocalCSS {
+				entryAbsPath = file.Source.PrettyPaths.Abs
+				entryRelPath = file.Source.PrettyPaths.Rel
+				cssModuleEntryCount++
+			}
+		}
+
 		for ref := range localNames {
 			symbol := c.graph.Symbols.Get(ref)
 			absPath := c.graph.Files[ref.SourceIndex].InputFile.Source.PrettyPaths.Abs
 			relPath := c.graph.Files[ref.SourceIndex].InputFile.Source.PrettyPaths.Rel
+
+			if cssModuleEntryCount == 1 {
+				absPath = entryAbsPath
+				relPath = entryRelPath
+			}
 
 			name := symbol.OriginalName + "_" + ast.CssLocalHash(absPath)
 			if !c.options.MinifyIdentifiers {

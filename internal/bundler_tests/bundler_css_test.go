@@ -385,6 +385,133 @@ func TestImportLocalCSSFromJSDeterministicLocalCSSNamingMinifyIdentifiersWin(t *
 	})
 }
 
+func TestDeterministicLocalCSSNamingSingleEntryWithImportUnix(t *testing.T) {
+	css_suite.expectBundledUnix(t, bundled{
+		files: map[string]string{
+			"/entry.css": `
+				@import "./other/imported.css";
+				.entry { color: red }
+			`,
+			"/entry2.css": `
+				.entry2 { color: red }
+			`,
+			"/entry1.css": `
+				.entry1 { color: red }
+			`,
+			"/other/imported.css": `
+				.imported { color: blue }
+			`,
+		},
+		entryPaths: []string{"/entry1.css", "/entry.css", "/entry2.css"},
+		options: config.Options{
+			Mode:         config.ModeBundle,
+			AbsOutputDir: "/out",
+			ExtensionToLoader: map[string]config.Loader{
+				".css": config.LoaderLocalCSS,
+			},
+			DeterministicLocalCSSNaming: true,
+		},
+	})
+}
+
+func TestDeterministicLocalCSSNamingSingleEntryWithImportWin(t *testing.T) {
+	css_suite.expectBundledWindows(t, bundled{
+		files: map[string]string{
+			"C:\\entry.css": `
+				@import "./other/imported.css";
+				.entry { color: red }
+			`,
+			"C:\\other\\imported.css": `
+				.imported { color: blue }
+			`,
+		},
+		entryPaths: []string{"C:\\\\entry.css"},
+		options: config.Options{
+			Mode:         config.ModeBundle,
+			AbsOutputDir: "C:\\\\out",
+			ExtensionToLoader: map[string]config.Loader{
+				".css": config.LoaderLocalCSS,
+			},
+			DeterministicLocalCSSNaming: true,
+		},
+	})
+}
+
+func TestDeterministicLocalCSSNamingSingleEntryWithImportMinifyIdentifiersUnix(t *testing.T) {
+	css_suite.expectBundledUnix(t, bundled{
+		files: map[string]string{
+			"/entry.css": `
+				@import "./other/imported.css";
+				.entry { color: red }
+			`,
+			"/other/imported.css": `
+				.imported { color: blue }
+			`,
+		},
+		entryPaths: []string{"/entry.css"},
+		options: config.Options{
+			Mode:         config.ModeBundle,
+			AbsOutputDir: "/out",
+			ExtensionToLoader: map[string]config.Loader{
+				".css": config.LoaderLocalCSS,
+			},
+			DeterministicLocalCSSNaming: true,
+			MinifyIdentifiers:           true,
+		},
+	})
+}
+
+func TestDeterministicLocalCSSNamingSingleEntryWithImportMinifyIdentifiersWin(t *testing.T) {
+	css_suite.expectBundledWindows(t, bundled{
+		files: map[string]string{
+			"C:\\entry.css": `
+				@import "./other/imported.css";
+				.entry { color: red }
+			`,
+			"C:\\other\\imported.css": `
+				.imported { color: blue }
+			`,
+		},
+		entryPaths: []string{"C:\\\\entry.css"},
+		options: config.Options{
+			Mode:         config.ModeBundle,
+			AbsOutputDir: "C:\\\\out",
+			ExtensionToLoader: map[string]config.Loader{
+				".css": config.LoaderLocalCSS,
+			},
+			DeterministicLocalCSSNaming: true,
+			MinifyIdentifiers:           true,
+		},
+	})
+}
+
+func TestDeterministicLocalCSSNamingMultipleEntriesWithImportUnix(t *testing.T) {
+	css_suite.expectBundledUnix(t, bundled{
+		files: map[string]string{
+			"/entry1.css": `
+				@import "./shared.css";
+				.entry1 { color: red }
+			`,
+			"/entry2.css": `
+				@import "./shared.css";
+				.entry2 { color: blue }
+			`,
+			"/shared.css": `
+				.shared { color: green }
+			`,
+		},
+		entryPaths: []string{"/entry1.css", "/entry2.css"},
+		options: config.Options{
+			Mode:         config.ModeBundle,
+			AbsOutputDir: "/out",
+			ExtensionToLoader: map[string]config.Loader{
+				".css": config.LoaderLocalCSS,
+			},
+			DeterministicLocalCSSNaming: true,
+		},
+	})
+}
+
 func TestImportLocalCSSFromJSMinifyIdentifiers(t *testing.T) {
 	css_suite.expectBundled(t, bundled{
 		files: map[string]string{
