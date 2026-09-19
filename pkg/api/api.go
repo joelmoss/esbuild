@@ -398,7 +398,7 @@ type OutputFile struct {
 func Build(options BuildOptions) BuildResult {
 	start := time.Now()
 
-	ctx, errors := contextImpl(options)
+	ctx, errors := contextImpl(options, true)
 	if ctx == nil {
 		return BuildResult{Errors: errors}
 	}
@@ -555,7 +555,7 @@ func (err *ContextError) Error() string {
 
 // Documentation: https://esbuild.github.io/api/#build
 func Context(buildOptions BuildOptions) (BuildContext, *ContextError) {
-	ctx, errors := contextImpl(buildOptions)
+	ctx, errors := contextImpl(buildOptions, false)
 	if ctx == nil {
 		return nil, &ContextError{Errors: errors}
 	}

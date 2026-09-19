@@ -894,7 +894,11 @@ func cloneMangleCache(log logger.Log, mangleCache map[string]interface{}) map[st
 ////////////////////////////////////////////////////////////////////////////////
 // Build API
 
-func contextImpl(buildOpts BuildOptions) (*internalContext, []Message) {
+// "oneShot" is true for Build(), whose context lives for exactly one rebuild. Only then is it safe
+// for the file system that plugin "resolve" calls read through to cache directory listings: the
+// cache is discarded with the context, so nothing can go stale. A long-lived Context() must keep
+// re-reading them.
+func contextImpl(buildOpts BuildOptions, oneShot bool) (*internalContext, []Message) {
 	logOptions := logger.OutputOptions{
 		IncludeSource: true,
 		MessageLimit:  buildOpts.LogLimit,
@@ -910,10 +914,10 @@ func contextImpl(buildOpts BuildOptions) (*internalContext, []Message) {
 	realFS, err := fs.RealFS(fs.RealFSOptions{
 		AbsWorkingDir: absWorkingDir,
 
-		// This is a long-lived file system object so do not cache calls to
-		// ReadDirectory() (they are normally cached for the duration of a build
-		// for performance).
-		DoNotCache: true,
+		// A long-lived file system object must not cache calls to ReadDirectory() (they are
+		// normally cached for the duration of a build for performance). A one-shot build's context
+		// is discarded after a single rebuild, so it can.
+		DoNotCache: !oneShot,
 	})
 	if err != nil {
 		log := logger.NewStderrLog(logOptions)
