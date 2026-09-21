@@ -3715,6 +3715,64 @@ console.log("bar");
 }
 
 ================================================================================
+TestMetafileCSSBundleWin
+---------- /out/entry.js ----------
+// entry.js
+console.log("entry");
+
+---------- /out/entry.css ----------
+/* common.css */
+body {
+  color: red;
+}
+---------- metafile.json ----------
+{
+  "inputs": {
+    "C:\\common.css": {
+      "bytes": 28,
+      "imports": []
+    },
+    "C:\\entry.js": {
+      "bytes": 55,
+      "imports": [
+        {
+          "path": "C:\\common.css",
+          "kind": "import-statement",
+          "original": "./common.css"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "C:\\out\\entry.js": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": "C:\\entry.js",
+      "cssBundle": "C:\\out\\entry.css",
+      "inputs": {
+        "C:\\common.css": {
+          "bytesInOutput": 0
+        },
+        "C:\\entry.js": {
+          "bytesInOutput": 22
+        }
+      },
+      "bytes": 34
+    },
+    "C:\\out\\entry.css": {
+      "imports": [],
+      "inputs": {
+        "C:\\common.css": {
+          "bytesInOutput": 23
+        }
+      },
+      "bytes": 40
+    }
+  }
+}
+
+================================================================================
 TestPackageURLsInCSS
 ---------- /out/entry.css ----------
 /* test.css */

@@ -796,7 +796,16 @@ func (c *linkerContext) generateChunksInParallel(additionalFiles []graph.OutputF
 				jsonMetadataChunkPieces := c.breakJoinerIntoPieces(chunk.jsonMetadataChunkCallback(len(outputContents)))
 				jsonMetadataChunkBytes, _ := c.substituteFinalPaths(jsonMetadataChunkPieces, func(finalRelPathForImport string) string {
 					prettyPaths := resolver.MakePrettyPaths(c.fs, logger.Path{Text: c.fs.Join(c.options.AbsOutputDir, finalRelPathForImport), Namespace: "file"})
-					return prettyPaths.Select(c.options.MetafilePathStyle)
+
+					// Every placeholder in the metadata chunk sits inside a JSON string that was
+					// quoted before this path was known, so the path has to be escaped as it goes
+					// in. Without this a backslash in the path - every separator of an absolute
+					// path on Windows - is emitted raw, and the metafile is not valid JSON: a
+					// parser reading "cssBundle" sees "\a" and "\p" and either rejects the file
+					// or, more often, drops the backslash and hands back a path that names
+					// nothing. QuoteForJSON wraps its answer in quotes, which are already there.
+					quoted := helpers.QuoteForJSON(prettyPaths.Select(c.options.MetafilePathStyle), c.options.ASCIIOnly)
+					return string(quoted[1 : len(quoted)-1])
 				})
 				jsonMetadataChunk = string(jsonMetadataChunkBytes.Done())
 			}

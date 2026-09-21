@@ -5,6 +5,7 @@ import (
 
 	"github.com/evanw/esbuild/internal/compat"
 	"github.com/evanw/esbuild/internal/config"
+	"github.com/evanw/esbuild/internal/logger"
 )
 
 var css_suite = suite{
@@ -2531,6 +2532,33 @@ func TestMetafileCSSBundleTwoToOne(t *testing.T) {
 				{Data: "/", Placeholder: config.HashPlaceholder},
 			},
 			NeedsMetafile: true,
+		},
+	})
+}
+
+// Windows separators are backslashes, and the metafile is JSON: a path substituted into it
+// after its string was quoted has to be escaped on the way in. This asserts the whole metafile,
+// so an unescaped "cssBundle" shows up as the invalid JSON it is.
+func TestMetafileCSSBundleWin(t *testing.T) {
+	css_suite.expectBundledWindows(t, bundled{
+		files: map[string]string{
+			"C:\\entry.js": `
+				import './common.css'
+				console.log('entry')
+			`,
+			"C:\\common.css": `
+				body { color: red }
+			`,
+		},
+		entryPaths: []string{"C:\\\\entry.js"},
+		options: config.Options{
+			Mode:          config.ModeBundle,
+			AbsOutputDir:  "C:\\out",
+			NeedsMetafile: true,
+
+			// Absolute, which is the only style that puts a Windows separator in the metafile -
+			// the relative spelling is slash-normalised and would not show the bug.
+			MetafilePathStyle: logger.AbsPath,
 		},
 	})
 }
