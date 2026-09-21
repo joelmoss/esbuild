@@ -2288,12 +2288,12 @@ TestDeterministicLocalCSSNamingSingleEntryWithImportMinifyIdentifiersUnix
 TestDeterministicLocalCSSNamingSingleEntryWithImportMinifyIdentifiersWin
 ---------- /out/entry.css ----------
 /* other/imported.css */
-.imported_e8fb34a7 {
+.imported_3931eb68 {
   color: blue;
 }
 
 /* entry.css */
-.entry_e8fb34a7 {
+.entry_3931eb68 {
   color: red;
 }
 
@@ -2326,12 +2326,12 @@ TestDeterministicLocalCSSNamingSingleEntryWithImportUnix
 TestDeterministicLocalCSSNamingSingleEntryWithImportWin
 ---------- /out/entry.css ----------
 /* other/imported.css */
-.imported_e8fb34a7_entry {
+.imported_3931eb68_entry {
   color: blue;
 }
 
 /* entry.css */
-.entry_e8fb34a7_entry {
+.entry_3931eb68_entry {
   color: red;
 }
 
@@ -3417,9 +3417,9 @@ console.log("file 2", e, n.b);
 TestImportLocalCSSFromJSDeterministicLocalCSSNamingMinifyIdentifiersWin
 ---------- /out/entry.js ----------
 // dir1/style.css
-var t = "button_3b7f7807";
+var t = "button_337a526c";
 var l = {
-  a: "a_3b7f7807",
+  a: "a_337a526c",
   button: t
 };
 
@@ -3427,9 +3427,9 @@ var l = {
 console.log("file 1", t, l.a);
 
 // dir2/style.css
-var e = "button_ec1ae3bb";
+var e = "button_9b40f135";
 var n = {
-  b: "b_ec1ae3bb",
+  b: "b_9b40f135",
   button: e
 };
 
@@ -3438,18 +3438,18 @@ console.log("file 2", e, n.b);
 
 ---------- /out/entry.css ----------
 /* dir1/style.css */
-.a_3b7f7807 {
+.a_337a526c {
   color: red;
 }
-.button_3b7f7807 {
+.button_337a526c {
   display: none;
 }
 
 /* dir2/style.css */
-.b_ec1ae3bb {
+.b_9b40f135 {
   color: blue;
 }
-.button_ec1ae3bb {
+.button_9b40f135 {
   display: none;
 }
 
@@ -3497,9 +3497,9 @@ console.log("file 2", button2, style_default2.b);
 TestImportLocalCSSFromJSDeterministicLocalCSSNamingWin
 ---------- /out/entry.js ----------
 // dir1/style.css
-var button = "button_3b7f7807_dir1-style";
+var button = "button_337a526c_dir1-style";
 var style_default = {
-  a: "a_3b7f7807_dir1-style",
+  a: "a_337a526c_dir1-style",
   button
 };
 
@@ -3507,9 +3507,9 @@ var style_default = {
 console.log("file 1", button, style_default.a);
 
 // dir2/style.css
-var button2 = "button_ec1ae3bb_dir2-style";
+var button2 = "button_9b40f135_dir2-style";
 var style_default2 = {
-  b: "b_ec1ae3bb_dir2-style",
+  b: "b_9b40f135_dir2-style",
   button: button2
 };
 
@@ -3518,18 +3518,18 @@ console.log("file 2", button2, style_default2.b);
 
 ---------- /out/entry.css ----------
 /* dir1/style.css */
-.a_3b7f7807_dir1-style {
+.a_337a526c_dir1-style {
   color: red;
 }
-.button_3b7f7807_dir1-style {
+.button_337a526c_dir1-style {
   display: none;
 }
 
 /* dir2/style.css */
-.b_ec1ae3bb_dir2-style {
+.b_9b40f135_dir2-style {
   color: blue;
 }
-.button_ec1ae3bb_dir2-style {
+.button_9b40f135_dir2-style {
   display: none;
 }
 

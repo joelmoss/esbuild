@@ -7,7 +7,7 @@ package ast
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"path/filepath"
+	pathpkg "path"
 	"sort"
 	"strings"
 
@@ -829,14 +829,34 @@ func (minifier NameMinifier) NumberToMinifiedName(i int) string {
 	return name.String()
 }
 
+// A local CSS name is built from a file path, so it must not depend on which operating system ran
+// the build: the same source file has to produce the same class name everywhere, and a consumer
+// that rebuilds these names from the same path in another language has only the path string to
+// work from. Both halves therefore read "\\" and "/" as the same separator.
+//
+// The appendice below has always done this, folding both to "-". The hash did not, so on Windows
+// it hashed the platform's spelling while everything mirroring it hashed the portable one, and
+// the stylesheet's class names silently stopped matching the ones the page referenced.
+//
+// Unconditional rather than switched on the host OS: two files whose paths differ only in which
+// separator they use already share an appendice, so treating them as one here is the behaviour
+// that already applies, not a new collision. It also keeps the answer reproducible from the path
+// alone.
+func normalizeCssLocalPath(path string) string {
+	return strings.ReplaceAll(path, "\\", "/")
+}
+
 func CssLocalHash(path string) string {
-	hash := sha1.Sum([]byte(path))
+	hash := sha1.Sum([]byte(normalizeCssLocalPath(path)))
 	return hex.EncodeToString(hash[:])[0:8]
 }
 
 func CssLocalAppendice(path string) string {
-	// Remove the file extension
-	if ext := filepath.Ext(path); ext != "" {
+	path = normalizeCssLocalPath(path)
+
+	// Remove the file extension. Not filepath.Ext: the path is separator-normalised above, and
+	// "path/filepath" is disallowed in this tree (see the no-filepath target in the Makefile).
+	if ext := pathpkg.Ext(path); ext != "" {
 		path = path[:len(path)-len(ext)]
 	}
 
