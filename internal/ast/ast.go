@@ -829,21 +829,38 @@ func (minifier NameMinifier) NumberToMinifiedName(i int) string {
 	return name.String()
 }
 
-// A local CSS name is built from a file path, so it must not depend on which operating system ran
-// the build: the same source file has to produce the same class name everywhere, and a consumer
-// that rebuilds these names from the same path in another language has only the path string to
-// work from. Both halves therefore read "\\" and "/" as the same separator.
+// A local CSS name is built from a file path, and a consumer that rebuilds these names in another
+// language has only that path string to work from - so the same file must hash the same way
+// whichever OS spelled its path.
 //
-// The appendice below has always done this, folding both to "-". The hash did not, so on Windows
-// it hashed the platform's spelling while everything mirroring it hashed the portable one, and
-// the stylesheet's class names silently stopped matching the ones the page referenced.
+// On Windows it did not: the linker hashes PrettyPaths.Abs, which is the platform's own spelling,
+// while everything mirroring it hashed the portable one, and the stylesheet's class names silently
+// stopped matching the ones the page referenced.
 //
-// Unconditional rather than switched on the host OS: two files whose paths differ only in which
-// separator they use already share an appendice, so treating them as one here is the behaviour
-// that already applies, not a new collision. It also keeps the answer reproducible from the path
-// alone.
+// Only a Windows absolute path is folded - one with a drive or a UNC root - because that is the
+// only place "\\" is a separator. Everywhere else it is a legal file name character: folding it
+// unconditionally made `a\b.module.css` and `a/b.module.css` the same module on Linux and macOS,
+// and hashed such a path differently from a mirror that reads it as written. Decided from the
+// path rather than the host OS, so a mock Windows file system in the tests behaves as a real one.
+//
+// A relative path is left alone. The linker's appendice input is PrettyPaths.Rel, which
+// MakePrettyPaths already writes with "/".
 func normalizeCssLocalPath(path string) string {
-	return strings.ReplaceAll(path, "\\", "/")
+	if isWindowsAbsPath(path) {
+		return strings.ReplaceAll(path, "\\", "/")
+	}
+
+	return path
+}
+
+// A drive root (`C:\` or `C:/`) or a UNC root (`\\server`).
+func isWindowsAbsPath(path string) bool {
+	if len(path) >= 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/') {
+		c := path[0]
+		return 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z'
+	}
+
+	return strings.HasPrefix(path, `\\`)
 }
 
 func CssLocalHash(path string) string {
@@ -854,8 +871,9 @@ func CssLocalHash(path string) string {
 func CssLocalAppendice(path string) string {
 	path = normalizeCssLocalPath(path)
 
-	// Remove the file extension. Not filepath.Ext: the path is separator-normalised above, and
-	// "path/filepath" is disallowed in this tree (see the no-filepath target in the Makefile).
+	// Remove the file extension. Not filepath.Ext: "path/filepath" is disallowed in this tree (see
+	// the no-filepath target in the Makefile). Outside Windows the two agree, and on Windows the
+	// linker hands this a relative path MakePrettyPaths has already written with "/".
 	if ext := pathpkg.Ext(path); ext != "" {
 		path = path[:len(path)-len(ext)]
 	}
