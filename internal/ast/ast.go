@@ -871,9 +871,9 @@ func CssLocalHash(path string) string {
 func CssLocalAppendice(path string) string {
 	path = normalizeCssLocalPath(path)
 
-	// Remove the file extension. Not filepath.Ext: "path/filepath" is disallowed in this tree (see
-	// the no-filepath target in the Makefile). Outside Windows the two agree, and on Windows the
-	// linker hands this a relative path MakePrettyPaths has already written with "/".
+	// Remove the file extension. With the "path" package, because the OS-specific one is disallowed
+	// in this tree (see the no-filepath target in the Makefile). Outside Windows the two agree, and
+	// on Windows the linker hands this a relative path MakePrettyPaths has already written with "/".
 	if ext := pathpkg.Ext(path); ext != "" {
 		path = path[:len(path)-len(ext)]
 	}

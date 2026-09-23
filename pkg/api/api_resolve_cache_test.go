@@ -2,7 +2,7 @@ package api_test
 
 import (
 	"os"
-	"path/filepath"
+	"path"
 	"testing"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -22,7 +22,7 @@ func resolveAroundNewFilePlugin(t *testing.T, dir string, results *[2]api.Resolv
 				opts := api.ResolveOptions{Kind: api.ResolveJSImportStatement, ResolveDir: dir}
 				results[0] = build.Resolve("./late.js", opts)
 
-				if err := os.WriteFile(filepath.Join(dir, "late.js"), []byte("export {}\n"), 0o644); err != nil {
+				if err := os.WriteFile(path.Join(dir, "late.js"), []byte("export {}\n"), 0o644); err != nil {
 					t.Error(err)
 				}
 
@@ -35,7 +35,7 @@ func resolveAroundNewFilePlugin(t *testing.T, dir string, results *[2]api.Resolv
 
 func resolveCacheOptions(t *testing.T, results *[2]api.ResolveResult) api.BuildOptions {
 	dir := t.TempDir()
-	entry := filepath.Join(dir, "entry.js")
+	entry := path.Join(dir, "entry.js")
 	if err := os.WriteFile(entry, []byte("console.log(1)\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

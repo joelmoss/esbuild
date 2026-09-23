@@ -2,7 +2,7 @@ package api_test
 
 import (
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 	"testing"
 
@@ -21,11 +21,11 @@ const panicSentinel = "sentinel-from-plugin"
 // An entry importing one dependency, so every callback type has something to fire on.
 func panicFixture(t *testing.T) (dir string, entry string) {
 	dir = t.TempDir()
-	entry = filepath.Join(dir, "entry.js")
+	entry = path.Join(dir, "entry.js")
 	if err := os.WriteFile(entry, []byte("import './dep.js'\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "dep.js"), []byte("export {}\n"), 0o644); err != nil {
+	if err := os.WriteFile(path.Join(dir, "dep.js"), []byte("export {}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	return dir, entry
