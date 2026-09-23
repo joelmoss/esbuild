@@ -5,6 +5,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
 	"errors"
@@ -1596,11 +1597,10 @@ func rebuildImpl(args rebuildArgs, oldHashes map[string]string) (rebuildState, m
 					}
 					fs.BeforeFileOpen()
 					defer fs.AfterFileClose()
-					if oldHash, ok := oldHashes[result.AbsPath]; ok && oldHash == newHashes[result.AbsPath] {
-						if contents, err := ioutil.ReadFile(result.AbsPath); err == nil && bytes.Equal(contents, result.Contents) {
-							// Skip writing out files that haven't changed since last time
-							return
-						}
+					if fileHoldsContents(result.AbsPath, result.Contents) {
+						// Skip writing out files that already hold these bytes, whether
+						// the last rebuild wrote them or another build altogether did
+						return
 					}
 					if err := fs.MkdirAll(realFS, realFS.Dir(result.AbsPath), 0755); err != nil {
 						log.AddError(nil, logger.Range{}, fmt.Sprintf(
@@ -1610,7 +1610,7 @@ func rebuildImpl(args rebuildArgs, oldHashes map[string]string) (rebuildState, m
 						if result.IsExecutable {
 							mode = 0777
 						}
-						if err := ioutil.WriteFile(result.AbsPath, result.Contents, mode); err != nil {
+						if err := writeFileAtomically(realFS, result.AbsPath, result.Contents, mode); err != nil {
 							log.AddError(nil, logger.Range{}, fmt.Sprintf(
 								"Failed to write to output file: %s", err.Error()))
 						}
@@ -2622,4 +2622,47 @@ func stripDirPrefix(path string, prefix string, allowedSlashes string) (string, 
 	}
 
 	return "", false
+}
+
+// Whether "path" is a file holding exactly "contents". The size is checked
+// first, so a file that differs is never read.
+func fileHoldsContents(path string, contents []byte) bool {
+	info, err := os.Stat(path)
+	if err != nil || !info.Mode().IsRegular() || info.Size() != int64(len(contents)) {
+		return false
+	}
+	existing, err := ioutil.ReadFile(path)
+	return err == nil && bytes.Equal(existing, contents)
+}
+
+// Writes "contents" to a temporary file beside "path" and renames it into
+// place, so the file at "path" only ever holds the old contents or the new
+// ones. Writing in place truncates the file first, and anything reading it in
+// that window - such as a server handing output to a browser while another
+// build rewrites it - gets an empty or partial file.
+//
+// The temporary file is created with "mode" less the umask, as
+// ioutil.WriteFile would. Its name is short rather than derived from "path",
+// so a long output name cannot push it past the file system's limit.
+func writeFileAtomically(realFS fs.FS, path string, contents []byte, mode os.FileMode) error {
+	var suffix [8]byte
+	if _, err := rand.Read(suffix[:]); err != nil {
+		return err
+	}
+	tmpPath := realFS.Join(realFS.Dir(path), fmt.Sprintf(".esbuild-%x.tmp", suffix))
+	file, err := os.OpenFile(tmpPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(contents)
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
+	}
+	if err == nil {
+		err = os.Rename(tmpPath, path)
+	}
+	if err != nil {
+		os.Remove(tmpPath)
+	}
+	return err
 }
