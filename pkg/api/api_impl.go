@@ -2659,10 +2659,18 @@ func writeFileAtomically(realFS fs.FS, path string, contents []byte, mode os.Fil
 		err = closeErr
 	}
 	if err == nil {
-		err = os.Rename(tmpPath, path)
+		if err = os.Rename(tmpPath, path); err == nil {
+			return nil
+		}
+
+		// Another build renamed the same bytes into place first. Windows also
+		// refuses to replace a file that anything holds open, so builds racing
+		// to create one content-hashed output fail there on every rename but
+		// the first while a reader has it open.
+		if fileHoldsContents(path, contents) {
+			err = nil
+		}
 	}
-	if err != nil {
-		os.Remove(tmpPath)
-	}
+	os.Remove(tmpPath)
 	return err
 }
