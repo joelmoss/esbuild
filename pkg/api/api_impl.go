@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -2659,18 +2660,47 @@ func writeFileAtomically(realFS fs.FS, path string, contents []byte, mode os.Fil
 		err = closeErr
 	}
 	if err == nil {
-		if err = os.Rename(tmpPath, path); err == nil {
+		var renamed bool
+		if renamed, err = replaceFile(tmpPath, path, contents); renamed {
 			return nil
-		}
-
-		// Another build renamed the same bytes into place first. Windows also
-		// refuses to replace a file that anything holds open, so builds racing
-		// to create one content-hashed output fail there on every rename but
-		// the first while a reader has it open.
-		if fileHoldsContents(path, contents) {
-			err = nil
 		}
 	}
 	os.Remove(tmpPath)
 	return err
+}
+
+// Swappable in tests, which cannot make Windows refuse a rename on demand.
+var renameFile = os.Rename
+var retryRenames = runtime.GOOS == "windows"
+
+// Up to 127ms of waiting in all, doubling from 1ms.
+const renameAttempts = 8
+
+// Renames "tmpPath" over "path", and reports whether it did. It succeeds
+// without renaming when "path" already holds "contents": another build renamed
+// the same bytes into place first.
+//
+// Windows refuses to replace a file that anything holds open, and also refuses
+// while another build's rename of the same file is still in flight. In that
+// window "path" cannot be read either, so the contents check fails too and the
+// build used to fail with "Access is denied" although the other build was about
+// to leave exactly its bytes there. Both conditions pass within moments, so on
+// Windows the rename is retried for a little while, stopping as soon as either
+// the rename or the contents check succeeds.
+func replaceFile(tmpPath string, path string, contents []byte) (bool, error) {
+	delay := time.Millisecond
+	for attempt := 1; ; attempt++ {
+		err := renameFile(tmpPath, path)
+		if err == nil {
+			return true, nil
+		}
+		if fileHoldsContents(path, contents) {
+			return false, nil
+		}
+		if !retryRenames || attempt == renameAttempts {
+			return false, err
+		}
+		time.Sleep(delay)
+		delay *= 2
+	}
 }
